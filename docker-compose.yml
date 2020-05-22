@@ -1,0 +1,28 @@
+version: '2.4'
+services:
+  nodejs:                           # Custom made application for transferring data between S7 PLC and InfluxDB, running under node.js
+    depends_on:
+      - influxdb
+    build:
+      context: ./app
+    container_name: nodejs_s7app
+    image: nodejs_s7app:0.1
+    environment:
+      - PLC_IP=192.168.178.100
+      - INFLUX_HOST=influxdb
+      - INFLUX_DB=data
+    restart: always
+  influxdb:                         # InfluxDB host for data storage
+    image: influxdb
+    environment:
+      - INFLUXDB_DB=data
+    restart: always
+  grafana:                          # Grafana dashboard for data visualization
+    depends_on:
+      - nodejs
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    restart: always
+  
+  

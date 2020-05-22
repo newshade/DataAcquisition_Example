@@ -1,0 +1,16 @@
+{
+  "name": "s7app",
+  "version": "0.0.1",
+  "description": "Simple app for visualizing PLC data in Grafana dashboard",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Artur Nowocien",
+  "license": "ISC",
+  "dependencies": {
+    "influx": "5.5.1",
+    "nodes7": "0.3.10"
+  }
+}

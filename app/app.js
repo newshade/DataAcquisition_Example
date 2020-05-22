@@ -10,21 +10,21 @@ var doneReading = false,																// Declare other necessary variables
 ////								////
 ////	Name:		Address:		////
 ////								////
-/**/	Value: 		'DB2,REAL28', 	////
-/**/	DTL_YY:		'DB2,INT32',	////
-/**/	DTL_MM:		'DB2,BYTE34',	////
-/**/	DTL_DD:		'DB2,BYTE35',	////
-/**/	DTL_hh:		'DB2,BYTE37',	////
-/**/	DTL_mm:		'DB2,BYTE38',	////
-/**/	DTL_ss:		'DB2,BYTE39',	////
-/**/	DTL_nn:		'DB2,DINT40'	////
+/**/	Value: 		'DB3,REAL0', 	////
+/**/	DTL_YY:		'DB3,INT4',	////
+/**/	DTL_MM:		'DB3,BYTE6',	////
+/**/	DTL_DD:		'DB3,BYTE7',	////
+/**/	DTL_hh:		'DB3,BYTE9',	////
+/**/	DTL_mm:		'DB3,BYTE10',	////
+/**/	DTL_ss:		'DB3,BYTE11',	////
+/**/	DTL_nn:		'DB3,DINT12'	////
 ////								////
 ////// END OF DEFINITION AREA //////////
 };
 
 const influx = new Influx.InfluxDB({													// Set InfluxDB connection parameters:
-	host: 'localhost',																	// Host			(default: localhost - for EDGE device)
-	database: 'data',																	// Database name
+	host: process.env.INFLUX_HOST,														// Host			(default: localhost - for EDGE device)
+	database: process.env.INFLUX_DB,													// Database name
 	schema: [
 	  {
 		measurement: 'sensor_data',														// Table name
@@ -38,7 +38,7 @@ const influx = new Influx.InfluxDB({													// Set InfluxDB connection para
 
 s7conn.initiateConnection({																// Set PLC connection parameters:
 	port: 102,																			// Port			(INT, default: 102)
-	host: '192.168.0.1',																// IP address	(STRING)
+	host: process.env.PLC_IP,															// IP address	(STRING)
 	rack: 0,																			// Rack number	(INT, default: 0)
 	slot: 1																				// Slot number	(INT, default: 1 - for S7-1500; 2 - for S7-1200)
 }, connected);
@@ -62,7 +62,7 @@ function connected(err) {																// Return message when connecting error
 //	s7conn.readAllItems(valuesReady);													// Read and return all values when the connection is established
 	setInterval(function() { 
 		s7conn.readAllItems(valuesReady);												// Read and return all values every [t] miliseconds (set interval time [t] below)
-	}, 10);																				// Set interval time [t] (in miliseconds)
+	}, 1000);																				// Set interval time [t] (in miliseconds)
 }
 
 function valuesReady(anythingBad, values) {
@@ -78,7 +78,7 @@ function valuesReady(anythingBad, values) {
 		(Math.trunc(values.DTL_nn * 0.001));
 
 	if (values.Value !== oldValue)	{													// Check if value has changed and when 'true', return new value with its timestamp
-//		console.log('Timestamp: ' + timestamp + ", Value: " + values.Value);			// Return values in console window		
+		console.log('Timestamp: ' + timestamp + ", Value: " + values.Value);			// Return values in console window		
 		influx.writePoints([															// Writing data records to InfluxDB database
 			{
 			  measurement: 'sensor_data',												// Selecting table 'sensor_data'
@@ -91,7 +91,7 @@ function valuesReady(anythingBad, values) {
 			  //timestamp: null,
 			}
 		  ], {
-			database: 'data',															// Selecting database 'data'
+			database: process.env.INFLUX_DB,															// Selecting database 'data'
 			precision: 'ms',															// Select precision - 'h' (hours), 'm' (minutes), 's' (seconds), 'ms' (miliseconds), 'u' (microseconds), 'ns' (nanoseconds)
 		  })
 		  .catch(error => {

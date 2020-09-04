@@ -16,6 +16,8 @@ services:
     image: influxdb
     environment:
       - INFLUXDB_DB=data
+    volumes:
+      - ./docka/influxdb:/var/lib/grafana
     restart: always
   grafana:                          # Grafana dashboard for data visualization
     depends_on:
@@ -23,6 +25,8 @@ services:
     image: grafana/grafana
     ports:
       - 3000:3000
+    volumes:
+      - ./docka/grafana:/var/lib/influxdb
     restart: always
   
   

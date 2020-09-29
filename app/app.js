@@ -10,14 +10,16 @@ var doneReading = false,																// Declare other necessary variables
 ////								////
 ////	Name:		Address:		////
 ////								////
-/**/	Value: 		'DB3,REAL0', 	////
-/**/	DTL_YY:		'DB3,INT4',	////
-/**/	DTL_MM:		'DB3,BYTE6',	////
-/**/	DTL_DD:		'DB3,BYTE7',	////
-/**/	DTL_hh:		'DB3,BYTE9',	////
-/**/	DTL_mm:		'DB3,BYTE10',	////
-/**/	DTL_ss:		'DB3,BYTE11',	////
-/**/	DTL_nn:		'DB3,DINT12'	////
+/**/	Value1: 	'DB1,INT0',
+		Value2:		'DB1,REAL6',
+		Value3:		'DB1,INT10', 	////
+/**/	DTL_YY:		'DB1,INT12',		////
+/**/	DTL_MM:		'DB1,BYTE14',	////
+/**/	DTL_DD:		'DB1,BYTE15',	////
+/**/	DTL_hh:		'DB1,BYTE17',	////
+/**/	DTL_mm:		'DB1,BYTE18',	////
+/**/	DTL_ss:		'DB1,BYTE19',	////
+/**/	DTL_nn:		'DB1,DINT20'	////
 ////								////
 ////// END OF DEFINITION AREA //////////
 };
@@ -29,7 +31,9 @@ const influx = new Influx.InfluxDB({													// Set InfluxDB connection para
 	  {
 		measurement: 'sensor_data',														// Table name
 		fields: { 
-			value: Influx.FieldType.FLOAT 												// Define table column and its variable type
+			value1: Influx.FieldType.INTEGER, 											// Define table column and its variable type
+			value2: Influx.FieldType.FLOAT,
+			value3: Influx.FieldType.INTEGER
 		},
 		tags: ['timestamp']																// Tag name
 	  }
@@ -50,7 +54,9 @@ function connected(err) {																// Return message when connecting error
 	}
 	s7conn.setTranslationCB(function(tag) {return variables[tag];});					// Translate absolute addresses of PLC variables in order to use symbolic names in further code
 	s7conn.addItems([																	// Define variables' names for translation
-		'Value',
+		'Value1',
+		'Value2',
+		'Value3',
 		'DTL_YY',
 		'DTL_MM',
 		'DTL_DD',
@@ -62,7 +68,7 @@ function connected(err) {																// Return message when connecting error
 //	s7conn.readAllItems(valuesReady);													// Read and return all values when the connection is established
 	setInterval(function() { 
 		s7conn.readAllItems(valuesReady);												// Read and return all values every [t] miliseconds (set interval time [t] below)
-	}, 1000);																				// Set interval time [t] (in miliseconds)
+	}, process.env.READ_CYCLE);																			// Set interval time [t] (in miliseconds)
 }
 
 function valuesReady(anythingBad, values) {
@@ -77,8 +83,8 @@ function valuesReady(anythingBad, values) {
 		values.DTL_ss + "." + 
 		(Math.trunc(values.DTL_nn * 0.001));
 
-	if (values.Value !== oldValue)	{													// Check if value has changed and when 'true', return new value with its timestamp
-		console.log('Timestamp: ' + timestamp + ", Value: " + values.Value);			// Return values in console window		
+	if (values.Value1 !== oldValue)	{													// Check if value has changed and when 'true', return new value with its timestamp
+		console.log('Timestamp: ' + timestamp + ", Values: " + values.Value1);			// Return values in console window		
 		influx.writePoints([															// Writing data records to InfluxDB database
 			{
 			  measurement: 'sensor_data',												// Selecting table 'sensor_data'
@@ -86,12 +92,14 @@ function valuesReady(anythingBad, values) {
 				timestamp: timestamp													// Setting tag 'timestamp' to actual timestamp value read from PLC
 			  },
 			  fields: {
-				  value: values.Value													// Setting 'value' to actual value read from PLC
+				  value1: values.Value1,													// Setting 'value' to actual value read from PLC
+				  value2: values.Value2,
+				  value3: values.Value3
 			  },
 			  //timestamp: null,
 			}
 		  ], {
-			database: process.env.INFLUX_DB,															// Selecting database 'data'
+			database: process.env.INFLUX_DB,											// Selecting database 'data'
 			precision: 'ms',															// Select precision - 'h' (hours), 'm' (minutes), 's' (seconds), 'ms' (miliseconds), 'u' (microseconds), 'ns' (nanoseconds)
 		  })
 		  .catch(error => {
@@ -101,7 +109,7 @@ function valuesReady(anythingBad, values) {
 	} else {
 		return;
 	}
-	oldValue = values.Value;															// Store current value in memory (for further comparison)
+	oldValue = values.Value1;															// Store current value in memory (for further comparison)
 	doneReading = true;
 }
 

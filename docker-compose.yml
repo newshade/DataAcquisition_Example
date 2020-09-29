@@ -8,25 +8,28 @@ services:
     container_name: nodejs_s7app
     image: nodejs_s7app:0.1
     environment:
-      - PLC_IP=192.168.178.100
+      - PLC_IP=192.168.0.10
       - INFLUX_HOST=influxdb
       - INFLUX_DB=data
+      - READ_CYCLE=1000
     restart: always
   influxdb:                         # InfluxDB host for data storage
     image: influxdb
     environment:
       - INFLUXDB_DB=data
     volumes:
-      - ./docka/influxdb:/var/lib/grafana
+      - ./docka/influxdb:/var/lib/influxdb
     restart: always
   grafana:                          # Grafana dashboard for data visualization
     depends_on:
       - nodejs
     image: grafana/grafana
     ports:
-      - 3000:3000
+      - 33000:3000
+    #user: "472"
     volumes:
-      - ./docka/grafana:/var/lib/influxdb
+      - grafana-storage:/var/lib/grafana
     restart: always
-  
+volumes:
+  grafana-storage: 
   
